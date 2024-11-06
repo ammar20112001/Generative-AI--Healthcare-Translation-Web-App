@@ -1,4 +1,5 @@
 from google.cloud import speech, texttospeech
+from openai import OpenAI
 
 from pydub import AudioSegment
 from io import BytesIO
@@ -8,22 +9,29 @@ class TranslatorModel():
 
     def __init__(self, config=None):
         self.speech_to_transcript = SpeechToTranscript()
-        self.transcript_translator = TranscriptTranslator
+        self.transcript_translator = TranscriptTranslator()
         self.transcript_to_speech = TranscriptToSpeech()
-        self.transcript = None
+        
+        self.src_transcript = None
+        self.tgt_transcript = None
 
     def SpeechToTranscript(self, audio_input):
-        self.transcript = self.speech_to_transcript.convert(audio_input)
-        return self.transcript
+        self.src_transcript = self.speech_to_transcript.convert(audio_input)
+        return self.src_transcript
 
-    def TranscriptTranslator(self):
-        pass
+    def TranscriptTranslator(self, src_text=None):
+        if src_text:
+            self.tgt_transcript = self.transcript_translator.convert(src_text)
+            return self.tgt_transcript
+        else:
+            self.tgt_transcript = self.transcript_translator.convert(self.src_transcript)
+            return self.tgt_transcript
 
     def TranscriptToSpeech(self, text_input=None):
         if text_input:
-            self.transcript_to_speech.convert(text_input)
+            return self.transcript_to_speech.convert(text_input)
         else:
-            self.transcript_to_speech.convert(self.transcript)
+            return self.transcript_to_speech.convert(self.tgt_transcript)
 
 
 
@@ -61,11 +69,26 @@ class SpeechToTranscript():
             return str(result.alternatives[0].transcript)
 
 
-
 class TranscriptTranslator():
 
     def __init__(self):
-        pass
+        self.client = OpenAI()
+
+    def convert(self, src_text):
+        completion = self.client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a Translator, who knows all langauges. All you do is write translation from source language to target language within quotation marks "". You don't say anything else, only and only translation in the target langauge."},
+                {
+                    "role": "user",
+                    "content": f"Translate the following sentence from English to German: {src_text}"
+                }
+            ]
+        )
+        try:
+            return completion.choices[0].message.content.split("\"")[1].split("\"")[0]
+        except:
+            return completion.choices[0].message.content
 
 
 class TranscriptToSpeech():
@@ -100,7 +123,7 @@ class TranscriptToSpeech():
             out.write(response.audio_content)
             print('Audio content written to file "output.mp3"')
 
-        return response.audio_content
+        return BytesIO(response.audio_content)
 
 
 if __name__ == "__main__":

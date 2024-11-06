@@ -18,21 +18,25 @@ model = TranslatorModel()
 
 if audio_bytes:
     # Step 1: Speech-to-Text
-    transcript = model.SpeechToTranscript(audio_bytes)
+    src_transcript = model.SpeechToTranscript(audio_bytes)
 
     time.sleep(2)  # Pause briefly to allow for UI updates
 
-    if transcript:
-        st.write("Transcript:", transcript)
+    if src_transcript:
+        st.write("Soruce Transcript:", src_transcript)
+
+        tgt_transcript = model.TranscriptTranslator()
+        st.write("Target Transcript:", tgt_transcript)
+
 
 play_audio = st.button("Play Audio")
 
 if play_audio:
     try:
         # Step 2: Text-to-Speech
-        _ = model.TranscriptToSpeech(transcript)
+        audio_content = model.TranscriptToSpeech()
         
         # Step 3: Play Translated Audio
-        st.audio("output.mp3", format="audio/mp3")
+        st.audio(audio_content, format="audio/mp3")
     except:
         pass

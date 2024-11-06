@@ -100,6 +100,8 @@ class TranscriptToSpeech():
             out.write(response.audio_content)
             print('Audio content written to file "output.mp3"')
 
+        return response.audio_content
+
 
 if __name__ == "__main__":
     model = TranslatorModel()

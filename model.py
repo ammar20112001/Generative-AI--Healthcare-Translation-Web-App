@@ -1,4 +1,4 @@
-from google.cloud import speech
+from google.cloud import speech, texttospeech
 
 
 class TranslatorModel():
@@ -6,16 +6,18 @@ class TranslatorModel():
     def __init__(self, config=None):
         self.speech_to_transcript = SpeechToTranscript()
         self.transcript_translator = TranscriptTranslator
-        self.transcript_to_speech = TranscriptToSpeech
+        self.transcript_to_speech = TranscriptToSpeech()
+        self.transcript = None
 
     def SpeechToTranscript(self, audio_input):
-        return self.speech_to_transcript.convert(audio_input)
+        self.transcript = self.speech_to_transcript.convert(audio_input)
+        return self.transcript
 
-    def TranscriptTranslator(self, transcript):
+    def TranscriptTranslator(self):
         pass
 
-    def TranscriptToSpeech(self, transcript):
-        pass
+    def TranscriptToSpeech(self):
+        self.transcript_to_speech.convert(self.transcript)
 
 
 
@@ -23,7 +25,7 @@ class SpeechToTranscript():
 
     def __init__(self):
         # Instantiates a client
-        self.client = speech.SpeechClient.from_service_account_file('medicaltranslator-0cbcafc5cecd.json')
+        self.client = speech.SpeechClient.from_service_account_file('medicaltranslator-99340673597e.json')
 
         
     def convert(self, audio_input):
@@ -55,12 +57,42 @@ class TranscriptTranslator():
 class TranscriptToSpeech():
 
     def __init__(self):
-        pass
+        # Instantiates a client
+        self.client = texttospeech.TextToSpeechClient.from_service_account_file('medicaltranslator-99340673597e.json')
+
+    def convert(self, text_input):
+        text = text_input
+
+        input_text = texttospeech.SynthesisInput(text=text)
+
+        # Note: the voice can also be specified by name.
+        # Names of voices can be retrieved with client.list_voices().
+        voice = texttospeech.VoiceSelectionParams(
+            language_code="en-US",
+            name="en-US-Standard-C",
+            ssml_gender=texttospeech.SsmlVoiceGender.FEMALE,
+        )
+
+        audio_config = texttospeech.AudioConfig(
+            audio_encoding=texttospeech.AudioEncoding.MP3
+        )
+
+        response = self.client.synthesize_speech(
+            request={"input": input_text, "voice": voice, "audio_config": audio_config}
+        )
+
+        # The response's audio_content is binary.
+        with open("output.mp3", "wb") as out:
+            out.write(response.audio_content)
+            print('Audio content written to file "output.mp3"')
+
 
 if __name__ == "__main__":
     model = TranslatorModel()
 
-    audio_input = "gs://cloud-samples-data/speech/brooklyn_bridge.raw"
+    audio_input = "gs://cloud-samples-data/speech/brooklyn_bridge.raw"\
 
     transcript = model.SpeechToTranscript(audio_input)
-    print("Return:", transcript)
+    print("Speech to text:", transcript)
+
+    model.TranscriptToSpeech()

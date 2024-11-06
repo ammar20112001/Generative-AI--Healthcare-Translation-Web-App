@@ -2,3 +2,5 @@
 .DFD*
 medicaltranslator-99340673597e.json
 test*
+__pycache__
+*.mp3

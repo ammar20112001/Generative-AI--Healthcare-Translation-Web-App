@@ -1,5 +1,8 @@
 from google.cloud import speech, texttospeech
 
+from pydub import AudioSegment
+from io import BytesIO
+
 
 class TranslatorModel():
 
@@ -16,8 +19,11 @@ class TranslatorModel():
     def TranscriptTranslator(self):
         pass
 
-    def TranscriptToSpeech(self):
-        self.transcript_to_speech.convert(self.transcript)
+    def TranscriptToSpeech(self, text_input=None):
+        if text_input:
+            self.transcript_to_speech.convert(text_input)
+        else:
+            self.transcript_to_speech.convert(self.transcript)
 
 
 
@@ -29,14 +35,22 @@ class SpeechToTranscript():
 
         
     def convert(self, audio_input):
-        # The name of the audio file to transcribe
-        gcs_uri = audio_input
+        # Convert audio to mono using pydub
+        audio = AudioSegment.from_file(BytesIO(audio_input))
+        audio = audio.set_channels(1)  # Convert to mono
+        audio = audio.set_frame_rate(16000)  # Optionally set to 16000 Hz
 
-        audio = speech.RecognitionAudio(uri=gcs_uri)
+        # Export the processed audio to bytes
+        mono_audio_data = BytesIO()
+        audio.export(mono_audio_data, format="wav")
+        mono_audio_data = mono_audio_data.getvalue()
+
+        # Use 'content' to pass raw audio data directly to the Google API
+        audio = speech.RecognitionAudio(content=mono_audio_data)
 
         config = speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-            sample_rate_hertz=16000,
+            #sample_rate_hertz=16000,
             language_code="en-US",
         )
 

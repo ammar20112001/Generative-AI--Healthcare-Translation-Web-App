@@ -6,6 +6,8 @@ import queue
 import re
 import sys
 
+import time
+
 from google.oauth2 import service_account
 
 from google.cloud import speech, texttospeech
@@ -30,6 +32,9 @@ credentials = service_account.Credentials.from_service_account_info(gcp_key)
 class TranslatorModel():
 
     def __init__(self, config=None):
+        
+        self.client = speech.SpeechClient(credentials=credentials)
+
         self.speech_to_transcript = SpeechToTranscript()
         self.transcript_translator = TranscriptTranslator()
         self.transcript_to_speech = TranscriptToSpeech()
@@ -42,14 +47,43 @@ class TranslatorModel():
         if audio_input:
             self.src_transcript = self.speech_to_transcript.convert_(audio_input)
             return self.src_transcript
+        
         else:
-            self.speech_to_transcript.convert(self.listen_print_loop)
+            """Transcribe speech from audio file."""
+            # See http://g.co/cloud/speech/docs/languages
+            # for a list of supported languages.
+            language_code = "en-US"  # a BCP-47 language tag
+
+            config = speech.RecognitionConfig(
+                encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+                sample_rate_hertz=RATE,
+                language_code=language_code,
+            )
+
+            streaming_config = speech.StreamingRecognitionConfig(
+                config=config, interim_results=True
+            )
+
+            with MicrophoneStream(RATE, CHUNK) as stream:
+                audio_generator = stream.generator()
+                requests = (
+                    speech.StreamingRecognizeRequest(audio_content=content)
+                    for content in audio_generator
+                )
+
+                responses = self.client.streaming_recognize(streaming_config, requests)
+
+                # Now, put the transcription responses to use.
+                transcript = self.listen_print_loop(responses=responses)
+
+                return transcript
 
     def TranscriptTranslator(self, src_text=None):
         if src_text:
             self.tgt_transcript = self.transcript_translator.convert(src_text)
             return self.tgt_transcript
         else:
+            #print(self.src_transcript)
             src_text = " ".join(self.src_transcript)
             self.tgt_transcript = self.transcript_translator.convert(src_text)
             return self.tgt_transcript
@@ -107,7 +141,7 @@ class TranslatorModel():
 
             last_window = transcript.split(" ")[-1]
             self.src_transcript.append(last_window)
-            print("Transcript:",last_window)
+            print("Transcript:",self.src_transcript)
 
             if not result.is_final:
                 sys.stdout.write(transcript + overwrite_chars + "\r")
@@ -115,12 +149,8 @@ class TranslatorModel():
 
                 num_chars_printed = len(transcript)
 
-                #yield str(transcript + overwrite_chars)
-
             else:
                 print(transcript + overwrite_chars)
-
-                #yield str(transcript + overwrite_chars)
 
                 # Exit recognition if any of the transcribed phrases could be
                 # one of our keywords.

@@ -3,6 +3,10 @@ import time
 import streamlit as st
 from model import TranslatorModel
 
+import io
+
+from tempfile import NamedTemporaryFile
+
 # Set up the Streamlit app
 st.title("Healthcare Translation App")
 
@@ -95,3 +99,21 @@ if play_audio:
         st.audio(audio_content, format="audio/mp3")
     except:
         pass
+
+audio = st.file_uploader("Upload an audio file", type=["mp3"])
+if audio is not None:
+    # Save the uploaded file to a temporary file on disk
+    with NamedTemporaryFile(suffix=".mp3", delete=False) as temp:
+        temp.write(audio.getvalue())  # Write the audio content to the temporary file
+        temp.seek(0)
+        
+        # Get the path of the temporary file
+        temp_file_path = temp.name
+        
+        # Pass the file path to the model function (assumes `SpeechToTranscript` expects a file path)
+        result = model.SpeechToTranscript(audio_sm=temp_file_path)
+        merged_transcript = " ".join([res.alternatives[0].transcript for res in result.results])    
+
+    # Display the transcription result
+    st.write(f"Source sentence: {merged_transcript}")
+    st.write(f"Target sentence: {model.TranscriptTranslator(run_once=True)}")

@@ -56,7 +56,7 @@ class TranslatorModel():
         
         else:
             transcript = self.speech_to_transcript.convert_audio_sm(audio_file=audio_sm)
-            self.src_transcript = transcript
+            self.src_transcript = [" ".join([res.alternatives[0].transcript for res in transcript.results]), "", "", ""]
             return transcript
 
     def TranscriptTranslator(self, run_once=False):

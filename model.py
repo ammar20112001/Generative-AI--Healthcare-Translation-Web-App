@@ -41,7 +41,9 @@ class TranslatorModel():
         self.MicrophoneStream = MicrophoneStream()
         
         self.src_transcript = []
-        self.tgt_transcript = None
+        self.tgt_transcript = ""
+
+        self.STOP_LISTENING = False
 
     def SpeechToTranscript(self, audio_input=None):
         if audio_input:
@@ -76,17 +78,15 @@ class TranslatorModel():
                 # Now, put the transcription responses to use.
                 transcript = self.listen_print_loop(responses=responses)
 
+                self.src_transcript = [transcript]
+
                 return transcript
 
-    def TranscriptTranslator(self, src_text=None):
-        if src_text:
-            self.tgt_transcript = self.transcript_translator.convert(src_text)
-            return self.tgt_transcript
-        else:
-            #print(self.src_transcript)
+    def TranscriptTranslator(self):
+        while not self.STOP_LISTENING:
             src_text = " ".join(self.src_transcript)
             self.tgt_transcript = self.transcript_translator.convert(src_text)
-            return self.tgt_transcript
+        return self.tgt_transcript
 
     def TranscriptToSpeech(self, text_input=None):
         if text_input:
@@ -115,7 +115,6 @@ class TranslatorModel():
         Returns:
             The transcribed text.
         """
-        output = []
         num_chars_printed = 0
         for response in responses:
             if not response.results:
@@ -139,9 +138,14 @@ class TranslatorModel():
             overwrite_chars = " " * (num_chars_printed - len(transcript))
 
 
-            last_window = transcript.split(" ")[-1]
-            self.src_transcript.append(last_window)
-            print("Transcript:",self.src_transcript)
+            #last_window = transcript.split(" ")[-1]
+            #self.src_transcript.append(last_window)
+           
+
+            if self.STOP_LISTENING:
+                print(transcript + overwrite_chars)
+                print("Exiting..")
+                break
 
             if not result.is_final:
                 sys.stdout.write(transcript + overwrite_chars + "\r")
@@ -151,6 +155,7 @@ class TranslatorModel():
 
             else:
                 print(transcript + overwrite_chars)
+                self.src_transcript.append(transcript + overwrite_chars+".")
 
                 # Exit recognition if any of the transcribed phrases could be
                 # one of our keywords.
@@ -298,7 +303,9 @@ class SpeechToTranscript():
             responses = self.client.streaming_recognize(streaming_config, requests)
 
             # Now, put the transcription responses to use.
-            _ = listen_print_loop(responses=responses)
+            transcript = listen_print_loop(responses=responses)
+
+            return transcript
 
         
     def convert_(self, audio_input):

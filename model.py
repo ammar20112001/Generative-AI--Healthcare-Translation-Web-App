@@ -27,7 +27,7 @@ CHUNK = int(RATE / 10)  # 100ms
 
 api_key = os.getenv("OPENAI_API_KEY_MEDICAL_TRANSLATOR")
 gcp_key = os.getenv("GCP_KEY_MEDICAL_TRANSLATOR")
-credentials = service_account.Credentials.from_service_account_info(gcp_key)
+credentials = service_account.Credentials.from_service_account_info(json.loads(gcp_key))
 
 
 class TranslatorModel():

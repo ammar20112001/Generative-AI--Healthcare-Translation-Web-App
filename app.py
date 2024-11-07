@@ -37,6 +37,9 @@ def translate():
 but = st.button("Start Real Time Recording")
 
 if but:
+    st.write("Both threads are running concurrently.")
+    st.write("Source transcript", model.src_transcript)
+    st.write("Target transcript", model.tgt_transcript)
     # Start the speech-to-text thread
     thread1 = threading.Thread(target=speech_to_text)
     thread1.start()
@@ -59,4 +62,4 @@ if but:
             translation_placeholder.write(f"\n\nTRANSLATION\n\n{st.session_state.translated_text}")
         time.sleep(1)
 
-    st.write("Both threads are running concurrently.")
+    

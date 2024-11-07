@@ -83,16 +83,15 @@ class TranslatorModel():
                 return transcript
 
     def TranscriptTranslator(self, run_once=False):
-        if not self.src_transcript == []:
-            if not run_once:
-                while not self.STOP_LISTENING:
-                    src_text = " ".join(self.src_transcript)
-                    self.tgt_transcript = self.transcript_translator.convert(src_text)
-                return self.tgt_transcript
-            else:
+        if not run_once:
+            while not self.STOP_LISTENING:
                 src_text = " ".join(self.src_transcript)
                 self.tgt_transcript = self.transcript_translator.convert(src_text)
-                return self.tgt_transcript
+            return self.tgt_transcript
+        else:
+            src_text = " ".join(self.src_transcript)
+            self.tgt_transcript = self.transcript_translator.convert(src_text)
+            return self.tgt_transcript
 
 
     def TranscriptToSpeech(self, text_input=None):
@@ -348,20 +347,24 @@ class TranscriptTranslator():
         self.client = OpenAI(api_key=api_key)
 
     def convert(self, src_text):
-        completion = self.client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a Translator, who knows all langauges. All you do is write translation from source language to target language within quotation marks "". You don't say anything else, only and only translation in the target langauge."},
-                {
-                    "role": "user",
-                    "content": f"Translate the following sentence from English to German: {src_text}"
-                }
-            ]
-        )
-        try:
-            return completion.choices[0].message.content.split("\"")[1].split("\"")[0]
-        except:
-            return completion.choices[0].message.content
+
+        if len(src_text)>3:
+            completion = self.client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a Translator, who knows all langauges. All you do is write translation from source language to target language within quotation marks "". You don't say anything else, only and only translation in the target langauge."},
+                    {
+                        "role": "user",
+                        "content": f"Translate the following sentence from English to German: {src_text}"
+                    }
+                ]
+            )
+            try:
+                return completion.choices[0].message.content.split("\"")[1].split("\"")[0]
+            except:
+                return completion.choices[0].message.content
+        else:
+            return ""
 
 
 class TranscriptToSpeech():

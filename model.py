@@ -78,7 +78,7 @@ class TranslatorModel():
                 # Now, put the transcription responses to use.
                 transcript = self.listen_print_loop(responses=responses)
 
-                self.src_transcript = [transcript]
+                #self.src_transcript = [transcript]
 
                 return transcript
 

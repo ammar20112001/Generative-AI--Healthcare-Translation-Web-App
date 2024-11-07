@@ -1,8 +1,19 @@
+import os
+
+import json
+
+from google.oauth2 import service_account
+
 from google.cloud import speech, texttospeech
 from openai import OpenAI
 
 from pydub import AudioSegment
 from io import BytesIO
+
+
+api_key = os.getenv("OPENAI_API_KEY_MEDICAL_TRANSLATOR")
+gcp_key = json.loads(os.getenv("GCP_KEY_MEDICAL_TRANSLATOR"))
+credentials = service_account.Credentials.from_service_account_info(gcp_key)
 
 
 class TranslatorModel():
@@ -39,7 +50,7 @@ class SpeechToTranscript():
 
     def __init__(self):
         # Instantiates a client
-        self.client = speech.SpeechClient.from_service_account_file('medicaltranslator-99340673597e.json')
+        self.client = speech.SpeechClient(credentials=credentials)
 
         
     def convert(self, audio_input):
@@ -72,7 +83,7 @@ class SpeechToTranscript():
 class TranscriptTranslator():
 
     def __init__(self):
-        self.client = OpenAI()
+        self.client = OpenAI(api_key=api_key)
 
     def convert(self, src_text):
         completion = self.client.chat.completions.create(
@@ -95,7 +106,7 @@ class TranscriptToSpeech():
 
     def __init__(self):
         # Instantiates a client
-        self.client = texttospeech.TextToSpeechClient.from_service_account_file('medicaltranslator-99340673597e.json')
+        self.client = texttospeech.TextToSpeechClient(credentials=credentials)
 
     def convert(self, text_input):
         text = text_input

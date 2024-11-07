@@ -82,11 +82,18 @@ class TranslatorModel():
 
                 return transcript
 
-    def TranscriptTranslator(self):
-        while not self.STOP_LISTENING:
-            src_text = " ".join(self.src_transcript)
-            self.tgt_transcript = self.transcript_translator.convert(src_text)
-        return self.tgt_transcript
+    def TranscriptTranslator(self, run_once=False):
+        if not self.src_transcript == []:
+            if not run_once:
+                while not self.STOP_LISTENING:
+                    src_text = " ".join(self.src_transcript)
+                    self.tgt_transcript = self.transcript_translator.convert(src_text)
+                return self.tgt_transcript
+            else:
+                src_text = " ".join(self.src_transcript)
+                self.tgt_transcript = self.transcript_translator.convert(src_text)
+                return self.tgt_transcript
+
 
     def TranscriptToSpeech(self, text_input=None):
         if text_input:

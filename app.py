@@ -11,6 +11,8 @@ record_but = st.button("Start Real Time Recording")
 stop_but = st.button("Stop Real Time Recording")
 tran_but = st.button("Change Translate")
 clear_but = st.button("Clear")
+play_audio = st.button("Play Audio")
+
 
 # Initialize model in Streamlit session state
 if 'model' not in st.session_state:
@@ -82,3 +84,14 @@ if clear_but:
     model.tgt_transcript = ""
     source_placeholder.write("Source transcript: ")
     target_placeholder.write("Target transcript: ")
+
+
+if play_audio:
+    try:
+        # Step 2: Text-to-Speech
+        audio_content = model.TranscriptToSpeech()
+        
+        # Step 3: Play Translated Audio
+        st.audio(audio_content, format="audio/mp3")
+    except:
+        pass

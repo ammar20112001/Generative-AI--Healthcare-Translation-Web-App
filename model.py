@@ -25,11 +25,8 @@ from io import BytesIO
 RATE = 16000
 CHUNK = int(RATE / 10)  # 100ms
 
-print(os.getenv("GCP_KEY_MEDICAL_TRANSLATOR"))
-print(os.getenv("GCP_KEY_MEDICAL_TRANSLATOR"))
-
 api_key = os.getenv("OPENAI_API_KEY_MEDICAL_TRANSLATOR")
-gcp_key = json.loads(os.getenv("GCP_KEY_MEDICAL_TRANSLATOR"))
+gcp_key = os.getenv("GCP_KEY_MEDICAL_TRANSLATOR")
 credentials = service_account.Credentials.from_service_account_info(gcp_key)
 
 

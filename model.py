@@ -55,7 +55,8 @@ class TranslatorModel():
                 return transcript
         
         else:
-            transcript = self.speech_to_transcript.convert_audio_sm(audio_sm)
+            transcript = self.speech_to_transcript.convert_audio_sm(audio_file=audio_sm)
+            self.src_transcript = transcript
             return transcript
 
     def TranscriptTranslator(self, run_once=False):
@@ -65,7 +66,10 @@ class TranslatorModel():
                 self.tgt_transcript = self.transcript_translator.convert(src_text)
             return self.tgt_transcript
         else:
-            src_text = " ".join(self.src_transcript)
+            try:
+                src_text = " ".join(self.src_transcript)
+            except:
+                src_text = [self.src_transcript, "", "", ""]
             self.tgt_transcript = self.transcript_translator.convert(src_text)
             return self.tgt_transcript
 
@@ -316,7 +320,7 @@ class SpeechToTranscript():
             return str(result.alternatives[0].transcript)
         
     
-    def convert_audio_sm(audio_file: str) -> speech.RecognizeResponse:
+    def convert_audio_sm(self, audio_file: str) -> speech.RecognizeResponse:
         """Transcribe the given audio file.
         Args:
             audio_file (str): Path to the local audio file to be transcribed.
@@ -324,14 +328,14 @@ class SpeechToTranscript():
         Returns:
             cloud_speech.RecognizeResponse: The response containing the transcription results
         """
-        client = speech.SpeechClient()
+        client = speech.SpeechClient(credentials=credentials)
 
         with open(audio_file, "rb") as f:
             audio_content = f.read()
 
         audio = speech.RecognitionAudio(content=audio_content)
         config = speech.RecognitionConfig(
-            encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+            encoding=speech.RecognitionConfig.AudioEncoding.MP3,
             sample_rate_hertz=16000,
             language_code="en-US",
         )

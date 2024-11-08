@@ -1,0 +1,18 @@
+[APIs]
+Google Speech-To-Text: Audio Transcription
+OpenAI API: Transcript Translation
+Google Text-To-Speech: Transcription to Audio
+
+[Web Service]
+Streamlit
+
+[Hosting Service]
+Huggingface Space
+Streamlit Cloud
+
+[Version Control]
+Git
+GitHub
+
+[Real-time Transcription/Translation]
+Multi-threading

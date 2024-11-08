@@ -2,7 +2,6 @@ import threading
 import time
 import streamlit as st
 from model import TranslatorModel
-import io
 from tempfile import NamedTemporaryFile
 
 # Set up the Streamlit app title

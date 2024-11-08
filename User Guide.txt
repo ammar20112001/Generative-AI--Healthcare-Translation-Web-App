@@ -1,0 +1,34 @@
+USER GUIDE:
+
+[Overview]
+The Healthcare Translation App allows you to:
+1. Select source and target languages.
+2. Record audio in real time and receive transcription and translation results, also in real time.
+3. Upload audio files for transcription and translation.
+4. Re-translate as per your need.
+5. Play back the translated audio.
+6. Clear transcripts and restart.
+
+
+[Features]
+Language Selection:
+• Select Source Language: Choose the language you want to translate from. For example, "Dutch (Belgium)".
+• Select Target Language: Choose the language to translate to.
+
+• Start Real-Time Recording:
+Click 'Start Real Time Recording' button to begin capturing audio. The app will transcribe the spoken words into text in the Source Transcript area.
+
+• Stop Real-Time Recording:
+Click 'Stop Real Time Recording' button to end the recording.
+
+• Change Translation:
+If you're not comfortable with the translated text, press 'Change Translation' button to make a new translation.
+
+• Clear:
+Use the Clear button to reset transcripts and prepare for a new session.
+
+• Play Audio:
+Click on 'Play Audio' anytime for the program to convert and run audio of the translated text. 
+
+• Upload an Audio File:
+Drag and drop or browse to upload an audio file (supports up to 200MB in MP3 format, and up to 60 seconds in length). The app will automatically process the audio and display the transcript in the selected languages.

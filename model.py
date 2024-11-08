@@ -29,13 +29,18 @@ credentials = service_account.Credentials.from_service_account_info(gcp_key)
 
 class TranslatorModel():
 
-    def __init__(self, config=None):
+    def __init__(self, 
+                 src_lang: str, 
+                 tgt_lang: str, 
+                 src_lang_name: str, 
+                 tgt_lang_name: str, 
+                 config=None):
         
         self.client = speech.SpeechClient(credentials=credentials)
 
-        self.speech_to_transcript = SpeechToTranscript()
-        self.transcript_translator = TranscriptTranslator()
-        self.transcript_to_speech = TranscriptToSpeech()
+        self.speech_to_transcript = SpeechToTranscript(src_lang=src_lang)
+        self.transcript_translator = TranscriptTranslator(src_lang_name=src_lang_name, tgt_lang_name=tgt_lang_name)
+        self.transcript_to_speech = TranscriptToSpeech(tgt_lang=tgt_lang)
         self.MicrophoneStream = MicrophoneStream()
         
         self.src_transcript = []
@@ -256,15 +261,16 @@ class MicrophoneStream:
 
 class SpeechToTranscript():
 
-    def __init__(self):
+    def __init__(self, src_lang: str):
         # Instantiates a client
         self.client = speech.SpeechClient(credentials=credentials)
+        self.src_lang = src_lang
 
     def convert(self, listen_print_loop) -> None:
         """Transcribe speech from audio file."""
         # See http://g.co/cloud/speech/docs/languages
         # for a list of supported languages.
-        language_code = "en-US"  # a BCP-47 language tag
+        language_code = self.src_lang  # a BCP-47 language tag
 
         config = speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
@@ -310,7 +316,7 @@ class SpeechToTranscript():
         config = speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
             #sample_rate_hertz=16000,
-            language_code="en-US",
+            language_code=self.src_lang,
         )
 
         # Detects speech in the audio file
@@ -337,7 +343,7 @@ class SpeechToTranscript():
         config = speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.MP3,
             sample_rate_hertz=16000,
-            language_code="en-US",
+            language_code=self.src_lang,
         )
 
         response = client.recognize(config=config, audio=audio)
@@ -353,8 +359,10 @@ class SpeechToTranscript():
 
 class TranscriptTranslator():
 
-    def __init__(self):
+    def __init__(self, src_lang_name: str, tgt_lang_name: str):
         self.client = OpenAI(api_key=api_key)
+        self.src_lang_name = src_lang_name
+        self.tgt_lang_name = tgt_lang_name
 
     def convert(self, src_text):
 
@@ -365,7 +373,7 @@ class TranscriptTranslator():
                     {"role": "system", "content": "You are a Translator, who knows all langauges. All you do is write translation from source language to target language within quotation marks "". You don't say anything else, only and only translation in the target langauge."},
                     {
                         "role": "user",
-                        "content": f"Translate the following sentence from English to German: {src_text}"
+                        "content": f"Translate the following sentence from {self.src_lang_name} to {self.tgt_lang_name}: {src_text}"
                     }
                 ]
             )
@@ -379,9 +387,10 @@ class TranscriptTranslator():
 
 class TranscriptToSpeech():
 
-    def __init__(self):
+    def __init__(self, tgt_lang: str):
         # Instantiates a client
         self.client = texttospeech.TextToSpeechClient(credentials=credentials)
+        self.tgt_lang = tgt_lang
 
     def convert(self, text_input):
         text = text_input
@@ -391,8 +400,7 @@ class TranscriptToSpeech():
         # Note: the voice can also be specified by name.
         # Names of voices can be retrieved with client.list_voices().
         voice = texttospeech.VoiceSelectionParams(
-            language_code="en-US",
-            name="en-US-Standard-C",
+            language_code=self.tgt_lang,
             ssml_gender=texttospeech.SsmlVoiceGender.FEMALE,
         )
 

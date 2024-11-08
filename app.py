@@ -10,6 +10,28 @@ st.title("Healthcare Translation App")
 
 # Create a two-column layout: left side for controls, right side for transcripts and other outputs
 col1, col2 = st.columns([1, 2])  # Left side is smaller (1), right side is larger (2)
+from languages import languages
+
+
+# Create a list of language names for selection
+language_names = list(languages.keys())
+
+# Create a list of language names for selection
+language_names = list(languages.keys())
+
+# Display the selectboxes for source and target language selection
+st.sidebar.header("Language Selection")
+
+# Source language selection
+source_language = st.sidebar.selectbox("Select Source Language", language_names)
+
+# Target language selection
+target_language = st.sidebar.selectbox("Select Target Language", language_names)
+
+# Display the selected languages
+st.write(f"Source Language: {source_language} ({languages[source_language]})")
+st.write(f"Target Language: {target_language} ({languages[target_language]})")
+
 
 # Buttons and file upload on the left side (column 1)
 with col1:
@@ -22,7 +44,10 @@ with col1:
 
 # Initialize model in Streamlit session state
 if 'model' not in st.session_state:
-    st.session_state.model = TranslatorModel()
+    st.session_state.model = TranslatorModel(src_lang=languages[source_language], 
+                                             tgt_lang=languages[target_language],
+                                             src_lang_name=source_language, 
+                                             tgt_lang_name=target_language)
 
 if 'record' not in st.session_state:
     st.session_state.record = False
@@ -33,6 +58,24 @@ with col2:
 
     if 'target_placeholder' not in st.session_state:
         st.session_state.target_placeholder = st.empty()
+
+# Check if the source or target language has changed
+if 'prev_source_language' not in st.session_state:
+    st.session_state.prev_source_language = source_language
+if 'prev_target_language' not in st.session_state:
+    st.session_state.prev_target_language = target_language
+
+# Detect language change
+if source_language != st.session_state.prev_source_language or target_language != st.session_state.prev_target_language:
+    # Reset the model instance
+    st.session_state.model = TranslatorModel(src_lang=languages[source_language], 
+                                             tgt_lang=languages[target_language],
+                                             src_lang_name=source_language, 
+                                             tgt_lang_name=target_language)
+    
+    # Update previous language states
+    st.session_state.prev_source_language = source_language
+    st.session_state.prev_target_language = target_language
 
 # Access the model stored in session state
 model = st.session_state.model

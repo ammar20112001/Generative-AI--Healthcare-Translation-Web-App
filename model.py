@@ -1,14 +1,10 @@
 import os
 
-import sounddevice as sd
-
 import json
 
 import queue
 import re
 import sys
-
-import time
 
 from google.oauth2 import service_account
 
@@ -16,7 +12,7 @@ from google.cloud import speech, texttospeech
 from openai import OpenAI
 
 from pydub import AudioSegment
-#import pyaudio
+import pyaudio
 
 from io import BytesIO
 
@@ -25,9 +21,10 @@ from io import BytesIO
 RATE = 16000
 CHUNK = int(RATE / 10)  # 100ms
 
+
 api_key = os.getenv("OPENAI_API_KEY_MEDICAL_TRANSLATOR")
-gcp_key = os.getenv("GCP_KEY_MEDICAL_TRANSLATOR")
-credentials = service_account.Credentials.from_service_account_info(json.loads(gcp_key))
+gcp_key = json.loads(os.getenv("GCP_KEY_MEDICAL_TRANSLATOR"))
+credentials = service_account.Credentials.from_service_account_info(gcp_key)
 
 
 class TranslatorModel():
@@ -46,42 +43,21 @@ class TranslatorModel():
 
         self.STOP_LISTENING = False
 
-    def SpeechToTranscript(self, audio_input=None):
-        if audio_input:
-            self.src_transcript = self.speech_to_transcript.convert_(audio_input)
-            return self.src_transcript
+    def SpeechToTranscript(self, audio_input=None, audio_sm=None):
+        
+        if audio_sm == None:
+            if audio_input:
+                self.src_transcript = self.speech_to_transcript.convert_(audio_input)
+                return self.src_transcript
+            
+            else:
+                transcript = self.speech_to_transcript.convert(self.listen_print_loop)
+                return transcript
         
         else:
-            """Transcribe speech from audio file."""
-            # See http://g.co/cloud/speech/docs/languages
-            # for a list of supported languages.
-            language_code = "en-US"  # a BCP-47 language tag
-
-            config = speech.RecognitionConfig(
-                encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-                sample_rate_hertz=RATE,
-                language_code=language_code,
-            )
-
-            streaming_config = speech.StreamingRecognitionConfig(
-                config=config, interim_results=True
-            )
-
-            with MicrophoneStream(RATE, CHUNK) as stream:
-                audio_generator = stream.generator()
-                requests = (
-                    speech.StreamingRecognizeRequest(audio_content=content)
-                    for content in audio_generator
-                )
-
-                responses = self.client.streaming_recognize(streaming_config, requests)
-
-                # Now, put the transcription responses to use.
-                transcript = self.listen_print_loop(responses=responses)
-
-                #self.src_transcript = [transcript]
-
-                return transcript
+            transcript = self.speech_to_transcript.convert_audio_sm(audio_file=audio_sm)
+            self.src_transcript = [" ".join([res.alternatives[0].transcript for res in transcript.results]), "", "", ""]
+            return transcript
 
     def TranscriptTranslator(self, run_once=False):
         if not run_once:
@@ -90,7 +66,10 @@ class TranslatorModel():
                 self.tgt_transcript = self.transcript_translator.convert(src_text)
             return self.tgt_transcript
         else:
-            src_text = " ".join(self.src_transcript)
+            try:
+                src_text = " ".join(self.src_transcript)
+            except:
+                src_text = [self.src_transcript, "", "", ""]
             self.tgt_transcript = self.transcript_translator.convert(src_text)
             return self.tgt_transcript
 
@@ -177,34 +156,34 @@ class TranslatorModel():
 
 class MicrophoneStream:
     """Opens a recording stream as a generator yielding the audio chunks."""
-    
+
     def __init__(self: object, rate: int = RATE, chunk: int = CHUNK) -> None:
         """The audio -- and generator -- is guaranteed to be on the main thread."""
         self._rate = rate
         self._chunk = chunk
-        
+
         # Create a thread-safe buffer of audio data
         self._buff = queue.Queue()
         self.closed = True
 
-    def _callback(self, in_data, frames, time, status):
-        """Callback function that is called by sounddevice to fill the buffer with data."""
-        if status:
-            print(status, flush=True)
-        self._buff.put(in_data)
-
     def __enter__(self: object) -> object:
-        """Open the microphone stream."""
-        self._audio_stream = sd.InputStream(
-            samplerate=self._rate,
-            channels=1,  # Mono audio
-            dtype='int16',
-            #frames_per_buffer=self._chunk,
-            callback=self._callback
+        self._audio_interface = pyaudio.PyAudio()
+        self._audio_stream = self._audio_interface.open(
+            format=pyaudio.paInt16,
+            # The API currently only supports 1-channel (mono) audio
+            # https://goo.gl/z757pE
+            channels=1,
+            rate=self._rate,
+            input=True,
+            frames_per_buffer=self._chunk,
+            # Run the audio stream asynchronously to fill the buffer object.
+            # This is necessary so that the input device's buffer doesn't
+            # overflow while the calling thread makes network requests, etc.
+            stream_callback=self._fill_buffer,
         )
-        
-        self._audio_stream.start()
+
         self.closed = False
+
         return self
 
     def __exit__(
@@ -213,15 +192,45 @@ class MicrophoneStream:
         value: object,
         traceback: object,
     ) -> None:
-        """Close the stream."""
-        self._audio_stream.stop()
+        """Closes the stream, regardless of whether the connection was lost or not."""
+        self._audio_stream.stop_stream()
         self._audio_stream.close()
         self.closed = True
-        # Signal the generator to terminate
+        # Signal the generator to terminate so that the client's
+        # streaming_recognize method will not block the process termination.
         self._buff.put(None)
+        self._audio_interface.terminate()
+
+    def _fill_buffer(
+        self: object,
+        in_data: object,
+        frame_count: int,
+        time_info: object,
+        status_flags: object,
+    ) -> object:
+        """Continuously collect data from the audio stream, into the buffer.
+
+        Args:
+            in_data: The audio data as a bytes object
+            frame_count: The number of frames captured
+            time_info: The time information
+            status_flags: The status flags
+
+        Returns:
+            The audio data as a bytes object
+        """
+        self._buff.put(in_data)
+        return None, pyaudio.paContinue
 
     def generator(self: object) -> object:
-        """Generate audio chunks from the stream of audio data in chunks."""
+        """Generates audio chunks from the stream of audio data in chunks.
+
+        Args:
+            self: The MicrophoneStream object
+
+        Returns:
+            A generator that outputs audio chunks.
+        """
         while not self.closed:
             # Use a blocking get() to ensure there's at least one chunk of
             # data, and stop iteration if the chunk is None, indicating the
@@ -257,9 +266,6 @@ class SpeechToTranscript():
         # for a list of supported languages.
         language_code = "en-US"  # a BCP-47 language tag
 
-        gcp_key = json.loads(os.getenv("GCP_KEY_MEDICAL_TRANSLATOR"))
-        credentials = service_account.Credentials.from_service_account_info(gcp_key)
-
         config = speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
             sample_rate_hertz=RATE,
@@ -282,10 +288,12 @@ class SpeechToTranscript():
             # Now, put the transcription responses to use.
             transcript = listen_print_loop(responses=responses)
 
+            #self.src_transcript = [transcript]
+
             return transcript
 
         
-    def convert_(self, audio_input):
+    def convert_browser(self, audio_input):
         # Convert audio to mono using pydub
         audio = AudioSegment.from_file(BytesIO(audio_input))
         audio = audio.set_channels(1)  # Convert to mono
@@ -310,6 +318,37 @@ class SpeechToTranscript():
 
         for result in response.results:
             return str(result.alternatives[0].transcript)
+        
+    
+    def convert_audio_sm(self, audio_file: str) -> speech.RecognizeResponse:
+        """Transcribe the given audio file.
+        Args:
+            audio_file (str): Path to the local audio file to be transcribed.
+                Example: "resources/audio.wav"
+        Returns:
+            cloud_speech.RecognizeResponse: The response containing the transcription results
+        """
+        client = speech.SpeechClient(credentials=credentials)
+
+        with open(audio_file, "rb") as f:
+            audio_content = f.read()
+
+        audio = speech.RecognitionAudio(content=audio_content)
+        config = speech.RecognitionConfig(
+            encoding=speech.RecognitionConfig.AudioEncoding.MP3,
+            sample_rate_hertz=16000,
+            language_code="en-US",
+        )
+
+        response = client.recognize(config=config, audio=audio)
+
+        # Each result is for a consecutive portion of the audio. Iterate through
+        # them to get the transcripts for the entire audio file.
+        for result in response.results:
+            # The first alternative is the most likely one for this portion.
+            print(f"Transcript: {result.alternatives[0].transcript}")
+
+        return response
 
 
 class TranscriptTranslator():

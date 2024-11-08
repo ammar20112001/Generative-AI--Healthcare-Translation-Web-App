@@ -1,3 +1,10 @@
+# Healthcare Translation App
+
+[Live Demo on Hugging Face Spaces](https://huggingface.co/spaces/ammar-20112001/Medical-Translator)  
+*Note: Due to limitations on cloud server deployments, the microphone functionality is not available on the hosted version. The app can only transcribe and translate uploaded audio files. For full functionality, please follow the local setup instructions below.*
+
+---
+
 ## 🔧 Tech Stack
 
 Python, Streamlit, Google Cloud Speech-to-Text, Google Cloud Text-to-Speech  
@@ -12,12 +19,6 @@ OpenAI GPT, Hugging Face Spaces, Docker, Git, GitHub
   <img src="https://img.icons8.com/fluency/48/000000/docker.png" alt="Docker" height="40"/>
   <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg" height="40" alt="git logo"  />
 </div>
-
-
-# Healthcare Translation App
-
-[Live Demo on Hugging Face Spaces](https://huggingface.co/spaces/ammar-20112001/Medical-Translator)  
-*Note: Due to limitations on cloud server deployments, the microphone functionality is not available on the hosted version. The app can only transcribe and translate uploaded audio files. For full functionality, please follow the local setup instructions below.*
 
 ---
 

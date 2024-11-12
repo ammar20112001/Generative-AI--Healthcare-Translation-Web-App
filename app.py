@@ -132,7 +132,7 @@ if tran_but:
     model.STOP_LISTENING = True
 
 if clear_but:
-    model.src_transcript = []
+    model.src_transcript = [""]
     model.tgt_transcript = ""
     source_placeholder.write("Source transcript: ")
     target_placeholder.write("Target transcript: ")

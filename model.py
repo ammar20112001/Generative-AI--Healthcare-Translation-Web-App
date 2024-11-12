@@ -44,7 +44,7 @@ class TranslatorModel():
         self.transcript_to_speech = TranscriptToSpeech(tgt_lang=tgt_lang)
         self.MicrophoneStream = MicrophoneStream()
         
-        self.src_transcript = []
+        self.src_transcript = [""]
         self.tgt_transcript = ""
 
         self.STOP_LISTENING = False
@@ -68,14 +68,15 @@ class TranslatorModel():
 
     def TranscriptCleaner(self, run_once=False):
         if len(" ".join(self.src_transcript))>15:
+            #print("\nself.src_transcript",self.src_transcript)
             try:
                 src_text = " ".join(self.src_transcript)
             except:
                 return
             response = self.transcript_cleaner.convert(src_text)
             #print("Transcript: ",self.src_transcript)
-            self.src_transcript = response.split(". ")
-
+            self.src_transcript = [response, ""]
+            #print("self.src_transcript",self.src_transcript, "\n")
 
     def TranscriptTranslator(self, run_once=False):
         if not run_once:
@@ -154,13 +155,16 @@ class TranslatorModel():
 
             if not result.is_final:
                 sys.stdout.write(transcript + overwrite_chars + "\r")
+                self.src_transcript[-1] = transcript + overwrite_chars
+                #print("\nInside: ",self.src_transcript)
                 sys.stdout.flush()
 
                 num_chars_printed = len(transcript)
 
             else:
-                print(transcript + overwrite_chars)
-                self.src_transcript.append(transcript + overwrite_chars)
+                #print(transcript + overwrite_chars)
+                self.src_transcript.append("")
+                #print("\nOutside: ",self.src_transcript)
 
                 # Exit recognition if any of the transcribed phrases could be
                 # one of our keywords.
@@ -383,21 +387,24 @@ class TranscriptCleaner():
             completion = self.client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": f"You are an expert of {self.src_lang_name} Grammar. Your job is that you get audio transcriptions, but it is cluttered, might have repeating words, no puntuations, typos, spelling, or Grammar mistakes. You have to detect any problem linuistic problem wihtin the text, and also puncuate it. You cannot change the sentence, or words, and you should write only the corrected sentence, within quotation marks."},
+                    {"role": "system", "content": f"You are an expert on {self.src_lang_name} language. Your job is to clean the sentence by reading the sentence, fixing spelling mistakes, and punctuating the sentence. You cannot change words, or sentences, or sentence structures. Write the fixed sentence within the double quotation marks \"\", and do not write anything else within your response."},
                     {
                         "role": "user",
-                        "content": f"Clean the following {self.src_lang_name} sentence: {src_text}"
+                        "content": f"Clean the following {self.src_lang_name} sentence and please make sure that you write your response in \"\" double quotation marks only and not write anythign else in your response, other than the cleaned sentence: {src_text}"
                     }
                 ]
             )
+            if len(completion.choices[0].message.content) < len(src_text)//2:
+                return src_text
+
             try:
-                #print("src_text:",src_text)
-                #print("completion.choices:",completion.choices[0].message.content.split("\"")[1].split("\"")[0])
+                #print("\nbefore cleaning:",src_text)
+                #print("afrer cleaning:",completion.choices[0].message.content.split("\"")[1].split("\"")[0],"\n")
                 return completion.choices[0].message.content.split("\"")[1].split("\"")[0]
             except:
                 return completion.choices[0].message.content
         else:
-            return ""
+            return src_text
 
 class TranscriptTranslator():
 

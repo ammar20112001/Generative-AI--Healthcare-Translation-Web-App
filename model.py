@@ -40,6 +40,7 @@ class TranslatorModel():
 
         self.speech_to_transcript = SpeechToTranscript(src_lang=src_lang)
         self.transcript_translator = TranscriptTranslator(src_lang_name=src_lang_name, tgt_lang_name=tgt_lang_name)
+        self.transcript_cleaner = TranscriptCleaner(src_lang_name=src_lang_name)
         self.transcript_to_speech = TranscriptToSpeech(tgt_lang=tgt_lang)
         self.MicrophoneStream = MicrophoneStream()
         
@@ -64,9 +65,23 @@ class TranslatorModel():
             self.src_transcript = [" ".join([res.alternatives[0].transcript for res in transcript.results]), "", "", ""]
             return transcript
 
+
+    def TranscriptCleaner(self, run_once=False):
+        if len(" ".join(self.src_transcript))>15:
+            try:
+                src_text = " ".join(self.src_transcript)
+                print("THISSS:", src_text)
+            except:
+                src_text = [self.src_transcript, "", "", ""]
+                print("EXCEPT THISSS:", src_text)
+            response = self.transcript_cleaner.convert(src_text)
+            self.src_transcript = response.split(". ")
+
+
     def TranscriptTranslator(self, run_once=False):
         if not run_once:
             while not self.STOP_LISTENING:
+                self.TranscriptCleaner()
                 src_text = " ".join(self.src_transcript)
                 self.tgt_transcript = self.transcript_translator.convert(src_text)
             return self.tgt_transcript
@@ -356,6 +371,32 @@ class SpeechToTranscript():
 
         return response
 
+
+class TranscriptCleaner():
+
+    def __init__(self, src_lang_name: str):
+        self.client = OpenAI(api_key=api_key)
+        self.src_lang_name = src_lang_name
+
+    def convert(self, src_text):
+
+        if len(src_text)>3:
+            completion = self.client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": f"You are an expert of {self.src_lang_name} Grammar. Your job is that you get audio transcriptions, but it is cluttered, might have repeating words, no puntuations, typos, spelling, or Grammar mistakes. You have to detect any problem linuistic problem wihtin the text, and also puncuate it. You cannot change the sentence, or words, and you should write only the corrected sentence, within quotation marks."},
+                    {
+                        "role": "user",
+                        "content": f"Clean the following {self.src_lang_name} sentence: {src_text}"
+                    }
+                ]
+            )
+            try:
+                return completion.choices[0].message.content.split("\"")[1].split("\"")[0]
+            except:
+                return completion.choices[0].message.content
+        else:
+            return ""
 
 class TranscriptTranslator():
 

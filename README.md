@@ -198,12 +198,6 @@ To run the app locally and access all its features, follow these steps:
 
 ---
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
 ## Acknowledgments
 
 - Thanks to **Google Cloud** for their Speech-to-Text and Text-to-Speech APIs.

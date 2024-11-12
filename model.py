@@ -70,11 +70,10 @@ class TranslatorModel():
         if len(" ".join(self.src_transcript))>15:
             try:
                 src_text = " ".join(self.src_transcript)
-                print("THISSS:", src_text)
             except:
-                src_text = [self.src_transcript, "", "", ""]
-                print("EXCEPT THISSS:", src_text)
+                return
             response = self.transcript_cleaner.convert(src_text)
+            #print("Transcript: ",self.src_transcript)
             self.src_transcript = response.split(". ")
 
 
@@ -161,7 +160,7 @@ class TranslatorModel():
 
             else:
                 print(transcript + overwrite_chars)
-                self.src_transcript.append(transcript + overwrite_chars+".")
+                self.src_transcript.append(transcript + overwrite_chars)
 
                 # Exit recognition if any of the transcribed phrases could be
                 # one of our keywords.
@@ -392,6 +391,8 @@ class TranscriptCleaner():
                 ]
             )
             try:
+                #print("src_text:",src_text)
+                #print("completion.choices:",completion.choices[0].message.content.split("\"")[1].split("\"")[0])
                 return completion.choices[0].message.content.split("\"")[1].split("\"")[0]
             except:
                 return completion.choices[0].message.content

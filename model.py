@@ -193,6 +193,7 @@ class TranslatorModel():
 
                 num_chars_printed = 0
 
+        print("Coming out of listening loop")
         return transcript
         
 

@@ -64,6 +64,8 @@ class TranslatorModel():
         else:
             transcript = self.speech_to_transcript.convert_audio_sm(audio_file=audio_sm)
             self.src_transcript = [" ".join([res.alternatives[0].transcript for res in transcript.results]), "", "", ""]
+            self.TranscriptCleaner() # Cleaning transcription from spelling and grammatical mistakes
+            self.MedicalTermsCleaner() # Fixing medical terminologies
             return transcript
 
 

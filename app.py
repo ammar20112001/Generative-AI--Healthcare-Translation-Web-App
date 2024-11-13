@@ -4,12 +4,39 @@ import streamlit as st
 from model import TranslatorModel
 from tempfile import NamedTemporaryFile
 
-# Set up the Streamlit app title
+from languages import languages
+
+
+# Set up the Streamlit app
 st.title("Healthcare Translation App")
 
-# Create a two-column layout: left side for controls, right side for transcripts and other outputs
-col1, col2 = st.columns([1, 2])  # Left side is smaller (1), right side is larger (2)
-from languages import languages
+
+# Create a list of language names for selection
+language_names = list(languages.keys())
+
+# Create a list of language names for selection
+language_names = list(languages.keys())
+
+# Display the selectboxes for source and target language selection
+st.sidebar.header("Language Selection")
+
+# Source language selection
+source_language = st.sidebar.selectbox("Select Source Language", language_names)
+
+# Target language selection
+target_language = st.sidebar.selectbox("Select Target Language", language_names)
+
+# Display the selected languages
+st.write(f"Source Language: {source_language} ({languages[source_language]})")
+st.write(f"Target Language: {target_language} ({languages[target_language]})")
+
+
+# Start real-time recording and translation
+record_but = st.button("Start Real Time Recording")
+stop_but = st.button("Stop Real Time Recording")
+tran_but = st.button("Change Translate")
+clear_but = st.button("Clear")
+play_audio = st.button("Play Audio")
 
 
 # Create a list of language names for selection

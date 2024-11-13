@@ -41,6 +41,7 @@ class TranslatorModel():
         self.speech_to_transcript = SpeechToTranscript(src_lang=src_lang)
         self.transcript_translator = TranscriptTranslator(src_lang_name=src_lang_name, tgt_lang_name=tgt_lang_name)
         self.transcript_cleaner = TranscriptCleaner(src_lang_name=src_lang_name)
+        self.medical_terms_cleaner = MedicalTermsCleaner(src_lang_name=src_lang_name)
         self.transcript_to_speech = TranscriptToSpeech(tgt_lang=tgt_lang)
         self.MicrophoneStream = MicrophoneStream()
         
@@ -78,10 +79,26 @@ class TranslatorModel():
             self.src_transcript = [response, ""]
             #print("self.src_transcript",self.src_transcript, "\n")
 
+    
+    def MedicalTermsCleaner(self, run_once=False):
+        if len(" ".join(self.src_transcript))>15:
+            #print("\nself.src_transcript",self.src_transcript)
+            try:
+                src_text = " ".join(self.src_transcript)
+            except:
+                return
+            response = self.medical_terms_cleaner.convert(src_text)
+            #print("Transcript: ",self.src_transcript)
+            self.src_transcript = [response, ""]
+            #print("self.src_transcript",self.src_transcript, "\n")
+
+
     def TranscriptTranslator(self, run_once=False):
         if not run_once:
             while not self.STOP_LISTENING:
-                self.TranscriptCleaner()
+                self.TranscriptCleaner() # Cleaning transcription from spelling and grammatical mistakes
+                self.MedicalTermsCleaner() # Fixing medical terminologies
+
                 src_text = " ".join(self.src_transcript)
                 self.tgt_transcript = self.transcript_translator.convert(src_text)
             return self.tgt_transcript
@@ -387,23 +404,109 @@ class TranscriptCleaner():
             completion = self.client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": f"You are an expert on {self.src_lang_name} language. Your job is to clean the sentence by reading the sentence, fixing spelling mistakes, and punctuating the sentence. You cannot change words, or sentences, or sentence structures. Write the fixed sentence within the double quotation marks \"\", and do not write anything else within your response."},
+                    {
+                        "role": "system", 
+                        "content": f"""You are an expert on {self.src_lang_name} language. Your job is to clean the 
+                        audio transcriptions by reading the transcriptions, fixing spelling mistakes, and punctuating 
+                        the sentence. You cannot change words, or sentences, or sentence structures. Write the 
+                        corrected transcription within the double quotation marks \"\". if there's nothing to change,
+                        just re-write the entire sentence as it is inside double quotation marks. And do not write 
+                        anything else within your response.
+                        """
+                    },
                     {
                         "role": "user",
-                        "content": f"Clean the following {self.src_lang_name} sentence and please make sure that you write your response in \"\" double quotation marks only and not write anythign else in your response, other than the cleaned sentence: {src_text}"
+                        "content": f"""Clean the following {self.src_lang_name} sentence and please make sure that 
+                        you write your response in \"\" double quotation marks only and not write anythign else in 
+                        your response, other than the cleaned sentence: 
+                        
+                        {src_text}"""
                     }
                 ]
             )
-            if len(completion.choices[0].message.content) < len(src_text)//2:
-                return src_text
 
             try:
-                #print("\nbefore cleaning:",src_text)
-                #print("afrer cleaning:",completion.choices[0].message.content.split("\"")[1].split("\"")[0],"\n")
-                return completion.choices[0].message.content.split("\"")[1].split("\"")[0]
+                response = completion.choices[0].message.content.split("\"")[1].split("\"")[0]
             except:
-                return completion.choices[0].message.content
+                print("PARSING ERROR WHILE CLEANING")
+                return src_text
+
+            if len(response) < len(src_text)//2:
+                print("\nCLEANING (short len):")
+                print("Before:",src_text)
+                print("After:",src_text,"\n")
+                return src_text
+
+            print("\nCLEANING: (try)")
+            print("Before:",src_text)
+            print("After:",response,"\n")
+            return response
+
         else:
+            print("\nCLEANING (else):")
+            print("Before:",src_text)
+            print("After:",src_text,"\n")
+            return src_text
+        
+
+class MedicalTermsCleaner():
+
+    def __init__(self, src_lang_name: str):
+        self.client = OpenAI(api_key=api_key)
+        self.src_lang_name = src_lang_name
+
+    def convert(self, src_text):
+
+        if len(src_text)>3:
+            completion = self.client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {
+                        "role": "system", 
+                        "content": f"""
+                        You are a medical expert. Your job is to review audio transcripts that have 
+                        medical terminologies written within the sentence, and fix if there's any spelling mistke in 
+                        the terminology or many times the medical terminologies are transcripted with wrong words. 
+                        If you detect any of the 2 possible cases, rewrite the entire sentence with fixed medical 
+                        terminologies inside double quotation marks "", and do not write anything else within your 
+                        response. If there is nothing to fix, just re-write the entire sentence inside "" double quotation marks.
+                        """
+                    },
+                    {
+                        "role": "user",
+                        "content": f"""
+                        Check the following {self.src_lang_name} sentence and fix if there's any medical terminology
+                        that's written incorrectly. Rewrite the entire sentence with fixed medical terminologies inside 
+                        double quotation marks "", and do not write anything else within your response. If there is
+                        nothing to fix, just re-write the entire sentence inside "" double quotation marks.
+                        
+                        {src_text}
+                        """
+                    }
+                ]
+            )
+            
+            try:
+                response = completion.choices[0].message.content.split("\"")[1].split("\"")[0]
+            except:
+                print("PARSING ERROR WHILE CLEANING")
+                return src_text
+
+            if len(response) < len(src_text)//2:
+                print("\nMEDICAL (short len):")
+                print("Before:",src_text)
+                print("After:",src_text,"\n")
+                return src_text
+
+            print("\nMEDICAL: (try)")
+            print("Before:",src_text)
+            print("After:",response,"\n")
+            return response
+
+        else:
+            print("\nMEDICAL (else):")
+            print("Before:",src_text)
+            print("After:",src_text,"\n")
             return src_text
 
 class TranscriptTranslator():
@@ -419,10 +522,19 @@ class TranscriptTranslator():
             completion = self.client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "You are a Translator, who knows all langauges. All you do is write translation from source language to target language within quotation marks "". You don't say anything else, only and only translation in the target langauge."},
+                    {
+                        "role": "system", 
+                        "content": """You are a Translator, who knows all langauges. All you do is write translation 
+                        from source language to target language within quotation marks "". You don't say anything else, 
+                        only and only translation in the target langauge.
+                        """
+                    },
                     {
                         "role": "user",
-                        "content": f"Translate the following sentence from {self.src_lang_name} to {self.tgt_lang_name}: {src_text}"
+                        "content": f"""Translate the following sentence from {self.src_lang_name} to {self.tgt_lang_name}: 
+                        
+                        {src_text}
+                        """
                     }
                 ]
             )

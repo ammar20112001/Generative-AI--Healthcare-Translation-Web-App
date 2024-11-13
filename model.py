@@ -432,20 +432,20 @@ class TranscriptCleaner():
                 return src_text
 
             if len(response) < len(src_text)//2:
-                print("\nCLEANING (short len):")
-                print("Before:",src_text)
-                print("After:",src_text,"\n")
+                #print("\nCLEANING (short len):")
+                #print("Before:",src_text)
+                #print("After:",src_text,"\n")
                 return src_text
 
-            print("\nCLEANING: (try)")
-            print("Before:",src_text)
-            print("After:",response,"\n")
+            #print("\nCLEANING: (try)")
+            #print("Before:",src_text)
+            #print("After:",response,"\n")
             return response
 
         else:
-            print("\nCLEANING (else):")
-            print("Before:",src_text)
-            print("After:",src_text,"\n")
+            #print("\nCLEANING (else):")
+            #print("Before:",src_text)
+            #print("After:",src_text,"\n")
             return src_text
         
 

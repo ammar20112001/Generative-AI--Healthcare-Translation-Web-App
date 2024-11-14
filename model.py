@@ -96,7 +96,7 @@ class TranslatorModel():
 
 
     def TranscriptTranslator(self, run_once=False):
-        if not run_once:
+        if run_once==False:
             while not self.STOP_LISTENING:
                 self.TranscriptCleaner() # Cleaning transcription from spelling and grammatical mistakes
                 self.MedicalTermsCleaner() # Fixing medical terminologies
@@ -105,10 +105,12 @@ class TranslatorModel():
                 self.tgt_transcript = self.transcript_translator.convert(src_text)
             return self.tgt_transcript
         else:
+            self.TranscriptCleaner() # Cleaning transcription from spelling and grammatical mistakes
+            self.MedicalTermsCleaner() # Fixing medical terminologies
             try:
                 src_text = " ".join(self.src_transcript)
             except:
-                src_text = [self.src_transcript, "", "", ""]
+                return src_text
             self.tgt_transcript = self.transcript_translator.convert(src_text)
             return self.tgt_transcript
 

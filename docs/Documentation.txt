@@ -1,6 +1,6 @@
 [APIs]
 Google Speech-To-Text: Audio Transcription
-OpenAI API: Transcript Translation
+OpenAI API: Transcript Translation / Cleaning / Medical Terms Check
 Google Text-To-Speech: Transcription to Audio
 
 [Web Service]

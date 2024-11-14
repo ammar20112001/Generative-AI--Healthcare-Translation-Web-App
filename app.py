@@ -8,7 +8,6 @@ from tempfile import NamedTemporaryFile
 
 from audio_recorder_streamlit import audio_recorder
 
-is_brw_model = False
 
 # Set up the Streamlit app title
 st.title("Healthcare Translation App")
@@ -32,10 +31,6 @@ source_language = st.sidebar.selectbox("Select Source Language", language_names)
 
 # Target language selection
 target_language = st.sidebar.selectbox("Select Target Language", language_names)
-
-# Display the selected languages
-st.write(f"Source Language: {source_language} ({languages[source_language]})")
-st.write(f"Target Language: {target_language} ({languages[target_language]})")
 
 
 # Buttons and file upload on the left side (column 1)
@@ -113,12 +108,13 @@ def translate(run_once=False):
 
 # Placeholder elements for updating the transcripts
 with col2:
-    source_placeholder.write(f"Source transcript: {' '.join(model.src_transcript)}")
-    target_placeholder.write(f"Target transcript: {model.tgt_transcript}")
+    source_placeholder.write(f"({source_language}) Source transcript: {' '.join(model.src_transcript)}")
+    target_placeholder.write(f"({target_language}) Target transcript: {model.tgt_transcript}")
 
 # Handling buttons' actions
 if record_but:
     model.STOP_LISTENING = False
+    record = True
 
     # Start speech-to-text and translation in background threads
     t1 = threading.Thread(target=speech_to_text)
@@ -134,8 +130,8 @@ if record_but:
         
         with col2:
             # Display updated transcripts
-            source_placeholder.write(f"Source transcript: {source_text}")
-            target_placeholder.write(f"Target transcript: {target_text}")
+            source_placeholder.write(f"({source_language}) Source transcript: {source_text}")
+            target_placeholder.write(f"({target_language}) Target transcript: {target_text}")
         
         time.sleep(1)  # Update every second
 
@@ -155,8 +151,8 @@ if brw_record_but:
             print("AFTERRR:",model.src_transcript)
         model.TranscriptTranslator(run_once=True)
 
-        source_placeholder.write(f"Source transcript: {' '.join(model.src_transcript)}")
-        target_placeholder.write(f"Target transcript: {model.tgt_transcript}")
+        source_placeholder.write(f"({source_language}) Source transcript: {' '.join(model.src_transcript)}")
+        target_placeholder.write(f"({target_language}) Target transcript: {model.tgt_transcript}")
 
     fill_buff()
 
@@ -167,15 +163,15 @@ if stop_but:
 if tran_but:
     model.STOP_LISTENING = False
     translate(run_once=True)
-    source_placeholder.write(f"Source transcript: {' '.join(model.src_transcript)}")
-    target_placeholder.write(f"Target transcript: {model.tgt_transcript}")
+    source_placeholder.write(f"({source_language}) Source transcript: {' '.join(model.src_transcript)}")
+    target_placeholder.write(f"({target_language}) Target transcript: {model.tgt_transcript}")
     model.STOP_LISTENING = True
 
 if clear_but:
     model.src_transcript = [""]
     model.tgt_transcript = ""
-    source_placeholder.write("Source transcript: ")
-    target_placeholder.write("Target transcript: ")
+    source_placeholder.write(f"({source_language}) Source transcript: ")
+    target_placeholder.write(f"({target_language}) Target transcript: ")
 
 if play_audio:
     try:
@@ -202,5 +198,5 @@ if audio is not None:
 
     # Display the transcription result on the right side
     with col2:
-        st.write(f"Source sentence: {" ".join(model.src_transcript)}")
-        st.write(f"Target sentence: {model.TranscriptTranslator(run_once=True)}")
+        st.write(f"({source_language}) Source sentence: {" ".join(model.src_transcript)}")
+        st.write(f"({target_language}) Target sentence: {model.TranscriptTranslator(run_once=True)}")

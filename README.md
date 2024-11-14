@@ -8,7 +8,7 @@
 ## 🔧 Tech Stack
 
 Python, Streamlit, Google Cloud Speech-to-Text, Google Cloud Text-to-Speech  
-OpenAI GPT, Hugging Face Spaces, Docker, Git, GitHub  
+OpenAI GPT, Hugging Face Spaces, Git  
 
 <div align="center">
   <img src="https://img.icons8.com/color/48/000000/python.png" alt="Python" height="40"/>
@@ -16,7 +16,6 @@ OpenAI GPT, Hugging Face Spaces, Docker, Git, GitHub
   <img src="https://img.icons8.com/fluency/48/000000/google-cloud.png" alt="Google Cloud" height="40"/>
   <img src="https://i.ibb.co/thdPt0w/openai-chatgpt-logo.webp" alt="OpenAI GPT" height="40"/>
   <img src="https://i.ibb.co/BzLrJQ2/hf-logo.png" height="40" alt="transformers logo"  />
-  <img src="https://img.icons8.com/fluency/48/000000/docker.png" alt="Docker" height="40"/>
   <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg" height="40" alt="git logo"  />
 </div>
 

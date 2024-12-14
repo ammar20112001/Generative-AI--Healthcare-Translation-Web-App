@@ -1,4 +1,4 @@
-# Healthcare Translation App
+# Real Time Translation App
 
 [Live Demo on Hugging Face Spaces](https://huggingface.co/spaces/ammar-20112001/Medical-Translator)  
 *Note: Due to limitations on cloud server deployments, the microphone functionality is not available on the hosted version. The app can only transcribe and translate uploaded audio files. For full functionality, please follow the local setup instructions below.*
@@ -23,7 +23,7 @@ OpenAI GPT, Hugging Face Spaces, Git
 
 ## Overview
 
-The **Healthcare Translation App** is a powerful tool designed to assist healthcare professionals in multilingual environments. It uses state-of-the-art AI technology to transcribe speech, translate it into a target language, and convert the translated text back into speech in real-time.
+The **Real Time Healthcare Translation App** is a powerful tool designed to assist healthcare professionals in multilingual environments. It uses state-of-the-art AI technology to transcribe speech, translate it into a target language, and convert the translated text back into speech in real-time.
 
 ### Key Features:
 - **Speech-to-Text**: Transcribes spoken language into text using Google Cloud Speech-to-Text.

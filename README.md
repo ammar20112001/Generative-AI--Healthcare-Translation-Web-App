@@ -39,7 +39,7 @@ This app is designed to help healthcare workers communicate more effectively acr
 ## Deployed Version
 
 You can try the **Healthcare Translation App** hosted on Hugging Face Spaces:  
-[Healthcare Translation App - Live Demo](https://huggingface.co/spaces/ammar-20112001/Medical-Translator)
+[Healthcare Translation App - Live Demo](https://huggingface.co/spaces/ammar-20112001/Real-Time-Translator)
 
 *Important Note*: Due to the limitations of cloud server environments, the hosted version cannot make real time updates. If you want to explore the full functionality, please follow the instructions below to set up the app locally.
 
